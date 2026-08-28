@@ -21,8 +21,10 @@ Priorities follow risk: the door must open for the right people (happy paths, on
 
 Two conventions are worth knowing when reading results:
 
-- **Expected-failure tests.** Two genuine defects found during test design are asserted as the *intended* behaviour and marked `test.fail()`. They show as expected failures while the defects exist and will flag loudly the moment either is fixed.
-- **Behaviour-documenting tests.** Some tests record current behaviour rather than a requirement (case-sensitive matching, no lockout, forged localStorage granting access). Their comments say so explicitly; passing is evidence, not endorsement.
+- **Expected-failure tests.** Two genuine defects found during test design are asserted as the *intended* behaviour and marked `test.fail()`. They show as expected failures while the defects exist and will flag loudly the moment either is fixed. Each carries a `known defect` annotation, visible on the test in the HTML report.
+- **Behaviour-documenting tests.** Some tests record current behaviour rather than a requirement (case-sensitive matching, no lockout, forged localStorage granting access). Their comments say so explicitly and the notable ones carry `observation` annotations in the report; passing is evidence, not endorsement.
+
+Spec files are prefixed `1-` to `4-` purely so the report reads in priority order (happy paths first, accessibility last); execution itself is parallel and order-independent.
 
 ## Findings
 
