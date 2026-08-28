@@ -58,6 +58,11 @@ test.describe('Login: happy path', () => {
    * See TESTING.md, defect 2.
    */
   test('shows the main content after login (known defect: stays hidden)', async ({ loggedIn }) => {
+    test.info().annotations.push({
+      type: 'known defect',
+      description:
+        'css/style.css sets .content to display:none and the Vue port never overrides it, so the main content never appears. See TESTING.md, defect 2.',
+    });
     test.fail();
     await expect(loggedIn.content).toBeVisible();
   });

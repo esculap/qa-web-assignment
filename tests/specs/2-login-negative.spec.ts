@@ -130,6 +130,11 @@ test.describe('Login: hostile and extreme input', () => {
    * here it is recorded as an observation (TESTING.md).
    */
   test('allows a valid login immediately after five failed attempts', async ({ loginPage, homePage }) => {
+    test.info().annotations.push({
+      type: 'security observation',
+      description:
+        'No lockout, back-off or CAPTCHA exists; in a production banking context this would be a finding. See TESTING.md, observations.',
+    });
     for (let attempt = 0; attempt < 5; attempt++) {
       await loginPage.logIn({ email: primaryUser.email, password: `wrong-${attempt}` });
       await loginPage.expectInvalidCredentialsError();

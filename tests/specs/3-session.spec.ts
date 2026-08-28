@@ -40,6 +40,11 @@ test.describe('Session lifecycle', () => {
    * defect 3.
    */
   test('opens the Sign Out menu from the avatar (known defect: never appears)', async ({ loggedIn }) => {
+    test.info().annotations.push({
+      type: 'known defect',
+      description:
+        'css/style.css hides .logout unless an "active" class is applied, and the Vue port only toggles v-if, so the dropdown can never appear. See TESTING.md, defect 3.',
+    });
     test.fail();
     await loggedIn.openAvatarMenu();
     await expect(loggedIn.signOutMenu).toBeVisible();
@@ -54,6 +59,11 @@ test.describe('Session lifecycle', () => {
    * evidence, not just a remark.
    */
   test('documents: a forged localStorage entry grants access without credentials', async ({ page, homePage }) => {
+    test.info().annotations.push({
+      type: 'security observation',
+      description:
+        'Authentication is entirely client-side; this test passing is the evidence. See TESTING.md, observations.',
+    });
     await page.addInitScript(() => localStorage.setItem('logged', 'forged@attacker.example'));
     await page.goto('/');
     await homePage.expectLoggedIn();

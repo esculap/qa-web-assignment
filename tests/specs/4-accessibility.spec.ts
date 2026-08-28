@@ -33,6 +33,11 @@ test.describe('Accessibility', () => {
    *     the only h1 belongs to the login screen.
    */
   test('logged-in page has exactly the two documented axe violations', async ({ loggedIn, page }) => {
+    test.info().annotations.push({
+      type: 'observation',
+      description:
+        'Pinned axe baseline: Logout button contrast (serious) and missing level-one heading (moderate). See TESTING.md, observations.',
+    });
     const knownViolations = ['color-contrast', 'page-has-heading-one'];
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations.map((v) => v.id).sort()).toEqual(knownViolations.sort());
