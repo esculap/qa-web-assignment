@@ -36,3 +36,17 @@ PS.
 
 **Good Luck!**
 
+---
+
+## Running the tests
+
+The automated suite lives under `tests/` and runs end-to-end with Playwright across Chromium, Firefox and WebKit:
+
+```bash
+npm ci
+npx playwright install
+npm test
+```
+
+The dev server starts automatically; no separate step is needed. See [TESTING.md](TESTING.md) for the test approach, the findings the suite documents, and how to read the results.
+
