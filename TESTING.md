@@ -2,53 +2,78 @@
 
 ## Scope
 
-The assignment asks for automated tests of the login functionality. I treated "login" as the full authentication lifecycle a user experiences: signing in, being rejected, the session surviving a reload, and signing out — plus the accessibility of that journey. Everything runs end-to-end through the UI with Playwright and TypeScript against the real dev server; the app has no isolated business logic that would justify a unit layer.
+I treat login as the complete authentication lifecycle: successful and rejected sign-in, session persistence, logout, and accessibility of the journey. The suite runs end-to-end with Playwright and TypeScript against the supplied Vue application. There is no API or separate authentication layer that would justify a unit or API test suite.
 
-## How to run
+The application is treated as a fixed test target. Where expected behaviour is clear, tests assert it directly. Unspecified or insecure current behaviour is recorded as an observation rather than presented as a requirement.
+
+## Risk-based coverage
+
+Detailed comments stay next to each test to explain what it proves and why it matters. At strategy level, coverage is prioritised as follows:
+
+| Area | Coverage |
+| --- | --- |
+| Successful access | Every seeded account, button and Enter submission, password masking, and cleared credentials after logout |
+| Rejected access | Wrong, unknown, empty, mismatched, case-changed, and whitespace-padded credentials; generic error, no session, and successful retry after correction |
+| Edge input | Script and SQL-style strings, long values, Unicode, and repeated failures |
+| Session lifecycle | Persistence after reload, complete logout, and rejection of a forged localStorage session |
+| Accessibility | Axe scans of logged-out and logged-in states plus a keyboard-only login journey |
+| Responsive layout | A focused horizontal-overflow check at a mobile-sized viewport |
+
+Valid accounts are imported from `js/users.js`, the source named by the assignment. Page objects hold locators and user actions; fixtures provide a fresh login page or an authenticated session. Every test receives an isolated browser context and can run independently in Chromium, Firefox, and WebKit.
+
+Spec prefixes `1-` to `5-` keep the HTML report in a useful reading order. Execution remains parallel and order-independent.
+
+## Result conventions
+
+- **Expected failures:** known defects assert the intended behaviour with `test.fail()`. Each also carries a `@known-defect` tag and a report annotation describing the finding. They remain green while failing as expected; an unexpected pass forces the baseline to be reviewed.
+- **Observations:** some tests intentionally demonstrate current behaviour, such as exact-string matching or absent throttling. A passing observation records evidence; it does not endorse the behaviour.
+- **Accessibility regression baseline:** the logged-in axe scan expects exactly the two known violation IDs. This keeps CI sensitive to both new violations and confirmed fixes; it is not a claim that the page complies with accessibility standards.
+
+Known-defect scenarios can be filtered with:
 
 ```bash
-npm ci
-npx playwright install
-npm test                     # full suite, three browsers, dev server auto-starts
-npx playwright show-report   # HTML report with traces for any failure
+npx playwright test --grep @known-defect
 ```
-
-`npm run test:headed` watches the tests run in a visible browser. `npm run typecheck` type-checks the suite without running it. No test requires the app to be started manually: Playwright's `webServer` owns the lifecycle locally and in CI.
-
-## What is tested, and why
-
-Priorities follow risk: the door must open for the right people (happy paths, one per seeded account, parameterised over `js/users.js`), stay shut for everyone else (a rejection table asserting one contract everywhere: generic error, form intact, no session written), and fail safely under hostile input (XSS and SQL-style strings, 5,000-character and unicode credentials, repeated failures). Session tests cover what happens after the door: reload persistence and complete teardown on logout. Accessibility is covered twice: axe-core scans for static state and a keyboard-only journey for what scanning cannot see.
-
-Two conventions are worth knowing when reading results:
-
-- **Expected-failure tests.** Two genuine defects found during test design are asserted as the *intended* behaviour and marked `test.fail()`. They show as expected failures while the defects exist and will flag loudly the moment either is fixed. Each carries a `known defect` annotation, visible on the test in the HTML report.
-- **Behaviour-documenting tests.** Some tests record current behaviour rather than a requirement (case-sensitive matching, no lockout, forged localStorage granting access). Their comments say so explicitly and the notable ones carry `observation` annotations in the report; passing is evidence, not endorsement.
-
-Spec files are prefixed `1-` to `4-` purely so the report reads in priority order (happy paths first, accessibility last); execution itself is parallel and order-independent.
 
 ## Findings
 
-Defects (each carries a test):
+### Application defects
 
-1. **The shipped `package-lock.json` was unusable outside the issuing network.** Every resolved URL pointed at an internal Nexus repository, so `npm ci` failed for any external clone and any CI runner. Fixed in the first commit by regenerating the lockfile against the public registry; dependency versions unchanged.
-2. **The main content never appears after login.** `css/style.css` sets `.content { display: none }`; the original vanilla implementation overrode it with an inline style on login, and the Vue port dropped that without adding a class binding. Login is only observable through the navigation bar and session storage.
-3. **The avatar's Sign Out dropdown can never open.** Same root cause, different element: `.logout` is hidden unless an `active` class is applied, and the Vue port only toggles `v-if`. The Logout button is the sole working sign-out path.
+1. **Main content remains hidden after login.** `.content` has `display: none`, and the Vue implementation never overrides it.
+2. **The avatar Sign Out menu cannot open.** `.logout` remains hidden because the Vue implementation does not apply the CSS `active` class. The separate Logout button still works.
+3. **A forged session bypasses login.** Any non-empty `localStorage.logged` value grants access without validated credentials.
 
-Observations (documented, not defects I would block a release on here — though several would be findings in a production banking context):
+### Accessibility findings
 
-- Authentication is entirely client-side: credentials ship in the bundle in plain text, and writing any value to `localStorage.logged` grants access. Recorded as an executable test.
-- Matching is exact-string: uppercased or whitespace-padded valid credentials are rejected, which will fail genuine users (autocomplete commonly appends a space).
-- No lockout, back-off or CAPTCHA after repeated failures; no maxlength on either field.
-- Axe: the logged-in page has two violations — the Logout button's text contrast (serious) and no level-one heading (moderate). The login page scans clean. Both are pinned as a baseline so new violations fail the suite. The error message also lacks a live region, so screen readers get no announcement on a failed attempt.
-- `npm audit` reports moderate/high advisories against vite 4's dev server (dev-time only); upgrading vite is a breaking change I left out of scope since the app is the assignment's fixture, not mine to rework.
+- The login page has no axe-detected violations.
+- The logged-in page has insufficient Logout button contrast and no level-one heading.
+- The invalid-credentials message has no live region, so screen readers are not notified when it appears.
 
-## What is deliberately not covered
+### Other observations
 
-- Visual styling and layout regression — no baseline exists to compare against, and pixel tests on someone else's CSS produce noise, not signal.
-- The legacy vanilla JS implementation (`js/index.js`) — dead code; the Vue app is what runs.
-- Load and performance testing — meaningless against a static-file dev server.
-- Manual-audit accessibility (meaningful alt text, cognitive load) — automated scanning catches only a minority of WCAG issues; I note it as a limit rather than pretending coverage.
+- Authentication and credential matching are entirely client-side, and credentials are shipped with the application.
+- Credential matching is case-sensitive and does not trim surrounding whitespace.
+- The form has no attempt throttling or input-length limits.
+- The original lockfile referenced a private package registry. It was regenerated against the public npm registry without changing dependency versions.
+- Dependency advisories remain in the supplied Vite 4 development tooling. Upgrading the application fixture is outside this assignment's scope.
 
-## Determinism
+## Deliberate limits
 
-No sleeps anywhere: every wait is a web-first assertion with auto-retry. Locators are role- and label-based, so they track the accessible UI rather than DOM structure. CI retries twice and keeps traces and screenshots on failure so any flake would arrive with evidence attached; across the three engines the suite has run flake-free. The external font and icon CDNs the page references are not blocked or mocked — no assertion depends on them; if they ever cause instability, routing those hosts to a stub is the first mitigation I would apply.
+- No visual regression testing: there is no approved visual baseline.
+- Responsive coverage is limited to horizontal overflow because the supplied CSS defines no responsive breakpoints or expected mobile states.
+- The legacy `js/index.js` implementation is not tested; the active application uses Vue.
+- No load or performance testing against the local static-file development server.
+- No claim of full accessibility compliance: automated scanning and one keyboard journey do not replace a manual audit.
+- The suite uses one Vite development-server setup. A production-bundle run would exercise the same UI behaviour and is not duplicated here.
+
+## Reliability and diagnostics
+
+Playwright owns the development-server lifecycle. Tests use role- and label-based locators, web-first assertions, and no arbitrary sleeps. No assertion depends on the external font or icon CDNs used by the page.
+
+CI retries unexpected failures twice, retains screenshots for failed attempts, and records a trace on the first retry. Local runs have retries disabled and therefore do not capture traces by default. The HTML report is uploaded by CI and can be opened locally with:
+
+```bash
+npx playwright show-report
+```
+
+Installation and execution commands are documented in [README.md](README.md).
