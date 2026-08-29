@@ -72,6 +72,23 @@ test.describe('Login: rejected credentials', () => {
     await loginPage.emailInput.pressSequentially('a');
     await expect(loginPage.errorMessage).toBeHidden();
   });
+
+  /**
+   * Proves: after a rejected attempt, the user can correct only the password
+   * and sign in successfully without refreshing the page.
+   * Risk: stale validation or form state could leave a genuine user stuck
+   * after one typing mistake.
+   */
+  test('allows a user to correct the password and retry without reloading', async ({ loginPage, homePage }) => {
+    await loginPage.logIn({ email: primaryUser.email, password: 'wrong-password' });
+    await loginPage.expectInvalidCredentialsError();
+
+    await loginPage.passwordInput.fill(primaryUser.password);
+    await loginPage.loginButton.click();
+
+    await homePage.expectLoggedIn();
+    expect(await homePage.storedSession()).toBe(primaryUser.email);
+  });
 });
 
 test.describe('Login: hostile and extreme input', () => {
