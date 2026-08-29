@@ -1,8 +1,46 @@
+# Login automation solution
+
+This repository contains a Playwright and TypeScript end-to-end suite for the supplied Vue login application. It covers successful and rejected login, session persistence and logout, documented application defects, keyboard operation, and automated accessibility checks across Chromium, Firefox, and WebKit.
+
+## Requirements
+
+- Node.js 22 or later
+- npm
+
+## Install and run
+
+```bash
+npm ci
+npx playwright install
+npm test
+```
+
+Playwright starts and stops the development server automatically. Useful additional commands:
+
+```bash
+npm run test:headed          # run with visible browsers
+npm run typecheck            # type-check the test suite
+npx playwright show-report   # open the latest HTML report
+```
+
+## CI and test approach
+
+The [E2E tests workflow](.github/workflows/tests.yml) runs on every pull request and push to `master`. It installs all three browser engines, type-checks the suite, runs the tests, and uploads the HTML report and failure evidence as an artifact.
+
+See [TESTING.md](TESTING.md) for the risk-based test approach, coverage decisions, known defects, accessibility findings, and reporting conventions.
+
+The supplied application source is intentionally unchanged. `README-Vue.md`, `index-vue.html`, and the legacy `js/index.js` are retained as part of the original fixture; the tests target the active Vue/Vite application.
+
+<details>
+<summary>Original assignment</summary>
+
 # Test assignment
+
 We are looking for Automation Engineers that have the mindset "only the sky is the limit"
 and "automation doesn't stop at testing, it's just a beginning!" ;)
 
 ## Purpose
+
 The purpose of this test assignment is to assess the applicant's automation skills, allowing him/her to show the best they can do and how fast they can learn.
 
 ## What's Expected
@@ -14,39 +52,31 @@ The purpose of this test assignment is to assess the applicant's automation skil
 - **Clean and maintainable test code** - Write code that is easy to understand and maintain
 
 ### Add-ons (Optional)
+
 - **Pipeline Integration** - Set up CI/CD pipeline (GitHub Actions, GitLab CI, etc.) to run tests automatically
 - **Accessibility (a11y)** - Include tests for accessibility compliance and user experience for all users
 
 ## Focus
+
 - **Tests are runnable** - All tests should execute without errors and provide clear results
 - **Project contains only necessary sources** - Keep the codebase clean with only essential files
 
 ## When the Assignment is Complete
+
 1. Push your solution to GitHub (or GitLab)
 2. Set the repository visibility to **public**
 3. Send us the link to your repository
 
 ## Important Notes
+
 - We don't expect you to spend weeks (and sleepless nights) on doing it. Lets see how far you can get in 6-10 hours. We want to see how you approach and solve problems.
 - You will find the users to login in users.js.
 - If you have any questions, please contact us.
 
 PS.
-- It is an open assignment. There is no right/wrong answer and there is no end goal other than proving your skills towards automation, pipeline, coverage, etc. 
+
+- It is an open assignment. There is no right/wrong answer and there is no end goal other than proving your skills towards automation, pipeline, coverage, etc.
 
 **Good Luck!**
 
----
-
-## Running the tests
-
-The automated suite lives under `tests/` and runs end-to-end with Playwright across Chromium, Firefox and WebKit:
-
-```bash
-npm ci
-npx playwright install
-npm test
-```
-
-The dev server starts automatically; no separate step is needed. See [TESTING.md](TESTING.md) for the test approach, the findings the suite documents, and how to read the results.
-
+</details>

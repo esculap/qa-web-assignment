@@ -55,13 +55,13 @@ test.describe('Login: happy path', () => {
    * port never overrides it (the original vanilla implementation set an
    * inline display style on login). Asserted as the intended behaviour and
    * marked test.fail(), so the suite flags loudly when the defect is fixed.
-   * See TESTING.md, defect 2.
+   * See TESTING.md, "Application defects".
    */
-  test('shows the main content after login (known defect: stays hidden)', async ({ loggedIn }) => {
+  test('shows the main content after login (known defect: stays hidden)', { tag: '@known-defect' }, async ({ loggedIn }) => {
     test.info().annotations.push({
       type: 'known defect',
       description:
-        'css/style.css sets .content to display:none and the Vue port never overrides it, so the main content never appears. See TESTING.md, defect 2.',
+        'css/style.css sets .content to display:none and the Vue port never overrides it, so the main content never appears. See TESTING.md, Application defects.',
     });
     test.fail();
     await expect(loggedIn.content).toBeVisible();

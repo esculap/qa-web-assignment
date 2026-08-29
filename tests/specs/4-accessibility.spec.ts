@@ -23,10 +23,10 @@ test.describe('Accessibility', () => {
   });
 
   /**
-   * Documents the logged-in page's two known axe violations and guards
-   * against regression in both directions: a new violation fails this
-   * test, and fixing a known one fails it too, forcing the baseline to be
-   * updated consciously. Known issues (details in TESTING.md):
+   * Uses the logged-in page's two known axe violations as a regression
+   * baseline, not as a claim of accessibility compliance. A new violation
+   * fails this test; fixing a known one also fails it so the baseline must be
+   * reviewed and updated consciously. Known issues (details in TESTING.md):
    *   - color-contrast (serious): the red Logout button's white text
    *     misses the 4.5:1 minimum ratio.
    *   - page-has-heading-one (moderate): the logged-in view renders no h1;
@@ -34,9 +34,9 @@ test.describe('Accessibility', () => {
    */
   test('logged-in page has exactly the two documented axe violations', async ({ loggedIn, page }) => {
     test.info().annotations.push({
-      type: 'observation',
+      type: 'accessibility baseline',
       description:
-        'Pinned axe baseline: Logout button contrast (serious) and missing level-one heading (moderate). See TESTING.md, observations.',
+        'Known-issue regression baseline, not a compliance pass: Logout button contrast (serious) and missing level-one heading (moderate). See TESTING.md, Accessibility findings.',
     });
     const knownViolations = ['color-contrast', 'page-has-heading-one'];
     const results = await new AxeBuilder({ page }).analyze();

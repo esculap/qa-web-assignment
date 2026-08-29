@@ -37,13 +37,13 @@ test.describe('Session lifecycle', () => {
    * inline display style instead). The dropdown can therefore never
    * appear. Asserted as the intended behaviour and marked test.fail() so
    * the suite flags loudly when the defect is fixed. See TESTING.md,
-   * defect 3.
+   * "Application defects".
    */
-  test('opens the Sign Out menu from the avatar (known defect: never appears)', async ({ loggedIn }) => {
+  test('opens the Sign Out menu from the avatar (known defect: never appears)', { tag: '@known-defect' }, async ({ loggedIn }) => {
     test.info().annotations.push({
       type: 'known defect',
       description:
-        'css/style.css hides .logout unless an "active" class is applied, and the Vue port only toggles v-if, so the dropdown can never appear. See TESTING.md, defect 3.',
+        'css/style.css hides .logout unless an "active" class is applied, and the Vue port only toggles v-if, so the dropdown can never appear. See TESTING.md, Application defects.',
     });
     test.fail();
     await loggedIn.openAvatarMenu();
@@ -51,21 +51,26 @@ test.describe('Session lifecycle', () => {
   });
 
   /**
-   * Documents current behaviour, deliberately: writing any value into
-   * localStorage grants full access without credentials, because
-   * authentication is entirely client-side. This test passing IS the
-   * security observation (TESTING.md): there is no server-side session to
-   * validate against. Recorded as a test so the risk is executable
-   * evidence, not just a remark.
+   * Proves the intended security boundary: a value injected directly into
+   * browser storage must not establish an authenticated session.
+   * Risk: the current app trusts any non-empty value, allowing login to be
+   * bypassed without valid credentials. Marked as an expected failure so the
+   * finding remains executable without blocking CI.
    */
-  test('documents: a forged localStorage entry grants access without credentials', async ({ page, homePage }) => {
-    test.info().annotations.push({
-      type: 'security observation',
-      description:
-        'Authentication is entirely client-side; this test passing is the evidence. See TESTING.md, observations.',
-    });
-    await page.addInitScript(() => localStorage.setItem('logged', 'forged@attacker.example'));
-    await page.goto('/');
-    await homePage.expectLoggedIn();
-  });
+  test(
+    'rejects a forged localStorage session (known defect: grants access)',
+    { tag: '@known-defect' },
+    async ({ page, loginPage, homePage }) => {
+      test.info().annotations.push({
+        type: 'security finding',
+        description:
+          'The app trusts any non-empty localStorage.logged value and grants access without validated credentials. See TESTING.md, Application defects.',
+      });
+      test.fail();
+      await page.addInitScript(() => localStorage.setItem('logged', 'forged@attacker.example'));
+      await page.goto('/');
+      await loginPage.expectVisible();
+      await expect(homePage.navigation).toBeHidden();
+    },
+  );
 });
